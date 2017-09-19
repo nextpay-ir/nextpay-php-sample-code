@@ -472,7 +472,7 @@ class Nextpay_Payment
     {
         $error_code = intval($error_code);
         $error_array = array(
-        0 => "Complete Transaction",
+            0 => "Complete Transaction",
 	    -1 => "Default State",
 	    -2 => "Bank Failed or Canceled",
 	    -3 => "Bank Payment Pendding",
@@ -500,10 +500,24 @@ class Nextpay_Payment
 	    -44 => "response bank invalid",
 	    -45 => "payment system deactived",
 	    -46 => "request incorrect",
+	    -47 => "gateway is deleted or not found",
 	    -48 => "commission rate not detect",
 	    -49 => "trans repeated",
 	    -50 => "account not found",
-	    -51 => "user not found"
+	    -51 => "user not found",
+	    -60 => "email incorrect",
+	    -61 => "national code incorrect",
+	    -62 => "postal code incorrect",
+	    -63 => "postal add incorrect",
+	    -64 => "desc incorrect",
+	    -65 => "name family incorrect",
+	    -66 => "tel incorrect",
+	    -67 => "account name incorrect",
+	    -68 => "product name incorrect",
+	    -69 => "callback success incorrect",
+	    -70 => "callback failed incorrect",
+	    -71 => "phone incorrect",
+	    -72 => "bank not response"
         );
         
         if (array_key_exists($error_code, $error_array)) {

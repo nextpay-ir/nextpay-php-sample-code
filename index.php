@@ -45,6 +45,7 @@ if(isset($_POST['start_pay'])){
 }
 elseif( $trans_id && $order_id ){
     include_once "nextpay_payment.php";
+    $nextpay = new Nextpay_Payment();
     if (!is_string($trans_id) || (preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $trans_id) !== 1)) {
         $message = ' شماره خطا: -34 <br />';
         $message .='<br>'.$nextpay->code_error(intval(-34));
@@ -59,8 +60,6 @@ elseif( $trans_id && $order_id ){
         'amount'	=> $amount,
     );
     try {
-        $nextpay = new Nextpay_Payment();
-
         $result = $nextpay->verify_request($parameters);
         if( $result < 0 ) {
             $message ='<br>پرداخت موفق نبوده است';
