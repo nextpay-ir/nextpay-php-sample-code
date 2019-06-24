@@ -11,9 +11,9 @@ header('Content-Type: text/html; charset=utf-8');
 ini_set("display_errors", 1);
 error_reporting(E_ALL);
 
-$api_key = "44444ddd-3333-4323-2222-111111111111";
+$api_key = "44448888-3333-4323-2222-111111111111";
 $trans_id = isset($_POST['trans_id']) ? $_POST['trans_id'] : false ;
-$order_id = isset($_POST['order_id']) ? $_POST['order_id'] : false ;
+$order_id = isset($_POST['order_id']) ? $_POST['order_id'] : time() ;
 $amount = isset($_POST['amount']) ? $_POST['amount'] : 100 ;
 $callback_uri = isset($_POST['callback_url']) ? $_POST['callback_url'] : 'http://localhost' ;
 

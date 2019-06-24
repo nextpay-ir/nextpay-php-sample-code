@@ -1,17 +1,24 @@
 <?php
 /**
  * Created by NextPay.ir
- * author: Nextpay Company
+ * author: Nextpay Company [Developers Team]
  * ID: @nextpay
- * Date: 09/22/2016
- * Time: 5:05 PM
+ * Date: 02/04/2019
+ * Time: 02:20 PM
  * Website: NextPay.ir
  * Email: info@nextpay.ir
- * @copyright 2016
- * @package NextPay_Gateway
- * @version 1.0
- * @UPDate
+ * @copyright 2016-2019
+ * @package NextPay Payment Gateway
+ * @version 1.4
  */
+
+class Type_Verify
+{
+    const NuSoap = 0;
+    const SoapClient = 1;
+    const Http = 2;
+}
+
 class Nextpay_Payment
 {
     //----- payment properties
@@ -110,11 +117,15 @@ class Nextpay_Payment
         }
     }
 
+    public function token(){
+        return $this->token_request();
+    }
+
     /**
      * @return string
      * return trans_id
      */
-    public function token()
+    public function token_request()
     {
         $res = "";
         switch ($this->default_verify)
@@ -134,7 +145,7 @@ class Nextpay_Payment
                             $this->code_error($res->code);*/
                     }
                     else
-                        $this->show_error("خطا در پاسخ دهی به درخواست با SoapClinet");
+                        $this->show_error("خطا در پاسخ دهی به درخواست با SoapClient");
                 }
                 catch(Exception $e){
                     $this->show_error($e->getMessage());
@@ -143,7 +154,7 @@ class Nextpay_Payment
             case Type_Verify::NuSoap:
                 try
                 {
-                    include_once ("include/nusoap/nusoap.php");
+                    include_once ("nusoap/nusoap.php");
 
                     $client = new nusoap_client($this->server_soap,'wsdl');
 
@@ -231,7 +242,7 @@ class Nextpay_Payment
                             $this->code_error($res->code);*/
                     }
                     else
-                        $this->show_error("خطا در پاسخ دهی به درخواست با SoapClinet");
+                        $this->show_error("خطا در پاسخ دهی به درخواست با SoapClient");
                 }
                 catch(Exception $e){
                     $this->show_error($e->getMessage());
@@ -240,29 +251,15 @@ class Nextpay_Payment
         }
         return $res;
     }
-
+    
     /**
-     * @param string $trans_id
+     * @return int|mixed
      */
-    public function send($trans_id)
-    {
-        if(isset($trans_id))
-        {
-            header_remove();
-            ob_clean();
-            if (headers_sent()) {
-                echo "<script> location.replace(\"".$this->request_http."/$trans_id"."\"); </script>";
-            }
-            else
-            {
-                header('Location: '.$this->request_http."/$trans_id");
-                exit(0);
-            }
-        }
-        else
-            $this->show_error("empty trans_id param send");
+     public function verify($params=false, $api_key=false, $order_id=false, $trans_id=false, $amount=false){
+        return $this->verify_request($params, $api_key, $order_id, $trans_id, $amount);
     }
-
+    
+    
     /**
      * @param array|bool $params
      * @param string|bool $api_key
@@ -370,7 +367,7 @@ class Nextpay_Payment
             case Type_Verify::NuSoap:
                 try
                 {
-                    include_once ("include/nusoap/nusoap.php");
+                    include_once ("nusoap/nusoap.php");
 
                     $client = new nusoap_client($this->server_soap,'wsdl');
 
@@ -458,6 +455,59 @@ class Nextpay_Payment
     }
 
     /**
+     * @param string $trans_id
+     */
+    public function send($trans_id, $url)
+    {
+        $return = '';
+        
+        if(isset($trans_id) && $this->checkTransID($trans_id)) $return = $this->request_http."/$trans_id";
+        else if(isset($url) && is_string($url) && strlen($url) > 7) $return = $url;
+        else {$this->show_error("empty trans_id or url redirect param send"); exit(0); return;}
+        
+        header_remove();
+        ob_clean();
+        
+        if (headers_sent()) echo "<script> location.replace(\"$return\"); </script>";
+        else
+        {
+            header('Location: '.$return);
+            exit(0);
+        }
+    }
+    
+    /**
+     * @param string $trans_id
+     */
+     public function checkTransID($trans_id)
+     {
+        $trans_id = trim(trim($trans_id," "));
+        if (isset($trans_id) && is_string($trans_id) && strlen($trans_id) == 36)
+        {        
+            if ((preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $trans_id) !== 1))
+                return true;
+        }
+        return false;
+     }
+    
+    /**
+     * @param string $trans_id
+     */
+    public function getRequestHttp($trans_id)
+    {
+        if(isset($trans_id) && $this->checkTransID($trans_id))
+        {
+            return $this->request_http."/$trans_id";
+        }
+        else if (isset($this->trans_id) && $this->checkTransID($this->trans_id)){
+            return $this->request_http."/{$this->trans_id}";
+        }else{
+            $this->show_error("empty trans_id param send");
+            return false;
+        }  
+    }
+
+    /**
      * @param string | string $error
      */
     public function show_error($error)
@@ -473,57 +523,60 @@ class Nextpay_Payment
     {
         $error_code = intval($error_code);
         $error_array = array(
-            0 => "Complete Transaction",
-            -1 => "Default State",
-            -2 => "Bank Failed or Canceled",
-            -3 => "Bank Payment Pendding",
-            -4 => "Bank Canceled",
-            -20 => "api key is not send",
-            -21 => "empty trans_id param send",
-            -22 => "amount in not send",
-            -23 => "callback in not send",
-            -24 => "amount incorrect",
-            -25 => "trans_id resend and not allow to payment",
-            -26 => "Token not send",
-            -27 => "order_id incorrect",
-            -30 => "amount less of limite payment",
-            -31 => "fund not found",
-            -32 => "callback error",
-            -33 => "api_key incorrect",
-            -34 => "trans_id incorrect",
-            -35 => "type of api_key incorrect",
-            -36 => "order_id not send",
-            -37 => "transaction not found",
-            -38 => "token not found",
-            -39 => "api_key not found",
-            -40 => "api_key is blocked",
-            -41 => "params from bank invalid",
-            -42 => "payment system problem",
-            -43 => "gateway not found",
-            -44 => "response bank invalid",
-            -45 => "payment system deactived",
-            -46 => "request incorrect",
-            -47 => "gateway is deleted or not found",
-            -48 => "commission rate not detect",
-            -49 => "trans repeated",
-            -50 => "account not found",
-            -51 => "user not found",
-            -60 => "email incorrect",
-            -61 => "national code incorrect",
-            -62 => "postal code incorrect",
-            -63 => "postal add incorrect",
-            -64 => "desc incorrect",
-            -65 => "name family incorrect",
-            -66 => "tel incorrect",
-            -67 => "account name incorrect",
-            -68 => "product name incorrect",
-            -69 => "callback success incorrect",
-            -70 => "callback failed incorrect",
-            -71 => "phone incorrect",
-            -72 => "bank not response",
-            -73 => "callback_uri incorrect"
+          0 => "Complete Transaction",
+	     -1 => "Default State",
+	     -2 => "Bank Failed or Canceled",
+	     -3 => "Bank Payment Pending",
+	     -4 => "Bank Canceled",
+	    -20 => "api key is not send",
+	    -21 => "empty trans_id param send",
+	    -22 => "amount not send",
+	    -23 => "callback not send",
+	    -24 => "amount incorrect",
+	    -25 => "trans_id resend and not allow to payment",
+	    -26 => "Token not send",
+	    -27 => "order_id incorrect",
+	    -28 => "custom field incorrect [must be json]",
+	    -30 => "amount less of limit payment",
+	    -31 => "fund not found",
+	    -32 => "callback error",
+	    -33 => "api_key incorrect",
+	    -34 => "trans_id incorrect",
+	    -35 => "type of api_key incorrect",
+	    -36 => "order_id not send",
+	    -37 => "transaction not found",
+	    -38 => "token not found",
+	    -39 => "api_key not found",
+	    -40 => "api_key is blocked",
+	    -41 => "params from bank invalid",
+	    -42 => "payment system problem",
+	    -43 => "gateway not found",
+	    -44 => "response bank invalid",
+	    -45 => "payment system deactivated",
+	    -46 => "request incorrect",
+	    -47 => "gateway is deleted or not found",
+	    -48 => "commission rate not detect",
+	    -49 => "trans repeated",
+	    -50 => "account not found",
+	    -51 => "user not found",
+	    -52 => "user not verify",
+	    -60 => "email incorrect",
+	    -61 => "national code incorrect",
+	    -62 => "postal code incorrect",
+	    -63 => "postal add incorrect",
+	    -64 => "desc incorrect",
+	    -65 => "name family incorrect",
+	    -66 => "tel incorrect",
+	    -67 => "account name incorrect",
+	    -68 => "product name incorrect",
+	    -69 => "callback success incorrect",
+	    -70 => "callback failed incorrect",
+	    -71 => "phone incorrect",
+	    -72 => "bank not response",
+	    -73 => "callback_uri incorrect [with api's address website]",
+	    -82 => "ppm incorrect token code"
         );
-
+        
         if (array_key_exists($error_code, $error_array)) {
             return $error_array[$error_code];
         } else {
@@ -706,11 +759,4 @@ class Nextpay_Payment
                 $this->default_verify = Type_Verify::SoapClient;
         }
     }
-}
-
-class Type_Verify
-{
-    const NuSoap = 0;
-    const SoapClient = 1;
-    const Http = 2;
 }
