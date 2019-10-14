@@ -120,7 +120,7 @@ $amount       = isset($_POST['amount'])       ? $_POST['amount']       : 100 ; /
 $callback_uri = isset($_POST['callback_uri']) ? $_POST['callback_uri'] : 'http://localhost/refund.php' ;
 $refund_key   = isset($_POST['refund_key'])   ? $_POST['refund_key']   : '' ;
 
-if(substr($callback_uri, 0, 7) != "http://" || substr($callback_uri, 0, 7) != "https://") $callback_uri = "http://". $callback_uri;
+if(substr($callback_uri, 0, 7) != "http://" || substr($callback_uri, 0, 8) != "https://") $callback_uri = "http://". $callback_uri;
 
 if(array_key_exists('api_key', $_POST) && isset($_POST['api_key'])){
     include_once "nextpay_payment.php";
